@@ -2246,15 +2246,46 @@ end;
 
 procedure TCustomFormEditor.JITListFindClass(Sender: TObject;
   const ComponentClassName: string; var ComponentClass: TComponentClass);
+
+  function GetUsedUnitsUppercase():TStringList;
+  var
+    AnUnitInfo: TUnitInfo;
+    JITList: TJITComponentList;
+    Code : TCodeBuffer;
+    i : integer;
+  begin
+    result := nil;
+    if TJITComponentList(sender).ContextObject is TUnitInfo then
+    begin
+      result := TStringList.Create;
+      JITList:=Sender as TJITComponentList;
+      AnUnitInfo:=TUnitInfo(JITList.ContextObject);
+      Code :=  AnUnitInfo.Source;
+      //TODO: raise when code=nil
+      if CodeToolBoss.FindUnusedUnits(Code,Result) then
+      begin
+        Result.Text:=UpperCase(Result.Text);
+      end;
+    end;
+  end;
+
 var
   AnUnitInfo: TUnitInfo;
+  JITList: TJITComponentList;
   Component: TComponent;
   RegComp: TRegisteredComponent;
-  JITList: TJITComponentList;
   i: Integer;
+  UsedUnits: TStringList;
 begin
   //DebugLn(['TCustomFormEditor.JITListFindClass ',ComponentClassName]);
-  RegComp:=IDEComponentPalette.FindRegComponent(ComponentClassName);
+  if IDEComponentPalette.IsAmbiguousComponentName(ComponentClassName) then
+  begin
+    UsedUnits:=GetUsedUnitsUppercase();
+    RegComp:=IDEComponentPalette.FindRegComponent(ComponentClassName, UsedUnits);
+    UsedUnits.Free;
+  end
+  else
+    RegComp:=IDEComponentPalette.FindRegComponent(ComponentClassName);
   if (RegComp<>nil) and
   not RegComp.ComponentClass.InheritsFrom(TCustomFrame) then // Nested TFrame
   begin

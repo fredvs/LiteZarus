@@ -218,6 +218,8 @@ type
     fPages: TBaseComponentPageList;
     // List of all components in all pages.
     fComps: TRegisteredCompList;
+    // list of unique component names with its ambigous count
+    fAmbiguosComps : TStringList; //TThreadlist;
     // New pages added and their priorities, ordered by priority.
     fOrigPagePriorities: TPagePriorityList;
     // User ordered + original pages and components
@@ -253,6 +255,7 @@ type
     function GetMultiSelect: boolean;
     procedure SetSelected(const AValue: TRegisteredComponent);
     procedure SetMultiSelect(AValue: boolean);
+    procedure UpdateAmbiguousComponentName(AComponentClass: string);
   protected
     FChanged: boolean;
     procedure DoChange; virtual; abstract;
@@ -274,6 +277,7 @@ type
     procedure RemoveRegComponent(AComponent: TRegisteredComponent);
     function FindRegComponent(ACompClass: TClass): TRegisteredComponent;
     function FindRegComponent(const ACompClassName: string): TRegisteredComponent;
+    function FindRegComponent(const ACompClassName: string; AUsedUnits: TStringList): TRegisteredComponent;
     function CreateNewClassName(const Prefix: string): string;
     procedure Update({%H-}ForceUpdateAll: Boolean); virtual;
     procedure IterateRegisteredClasses(Proc: TGetComponentClassEvent);
@@ -293,6 +297,7 @@ type
     procedure RemoveHandlerSelectionChanged(OnSelectionChangedEvent: TPaletteHandlerEvent);
     procedure AddHandlerUpdated(OnUpdateEvent: TPaletteHandlerEvent);
     procedure RemoveHandlerUpdated(OnUpdateEvent: TPaletteHandlerEvent);
+    function IsAmbiguousComponentName(AComponentClass: string): Boolean;
   public
     property Pages: TBaseComponentPageList read fPages;
     property Comps: TRegisteredCompList read fComps;
@@ -800,6 +805,7 @@ begin
   fSelectionMode:=csmSingle;
   fPages:=TBaseComponentPageList.Create;
   fComps:=TRegisteredCompList.Create;
+  fAmbiguosComps:=TStringList.Create;
   fOrigPagePriorities:=TPagePriorityList.Create;
   fUserOrder:=TCompPaletteUserOrder.Create(Self);
   fUserOrder.Options:=EnvPaletteOptions; // EnvironmentOptions.ComponentPaletteOptions;
@@ -832,6 +838,7 @@ begin
   FreeAndNil(fUserOrder);
   FreeAndNil(fOrigPagePriorities);
   FreeAndNil(fComps);
+  FreeAndNil(fAmbiguosComps);
   FreeAndNil(fPages);
   for HandlerType:=Low(HandlerType) to High(HandlerType) do
     FHandlers[HandlerType].Free;
@@ -848,6 +855,7 @@ begin
   for i:=0 to fComps.Count-1 do
     fComps[i].RealPage:=nil;
   fComps.Clear;
+  fAmbiguosComps.Clear;
   fOrigPagePriorities.Clear;
   fOrigPageHelper.Clear;
 end;
@@ -1019,6 +1027,17 @@ begin
     FSelectionMode := csmSingle;
 end;
 
+procedure TBaseComponentPalette.UpdateAmbiguousComponentName(
+  AComponentClass: string);
+var AmbCount : string;
+begin
+  AmbCount := fAmbiguosComps.Values[AComponentClass];
+  if AmbCount = EmptyStr then
+    fAmbiguosComps.Values[AComponentClass] := '1'
+  else
+    fAmbiguosComps.Values[AComponentClass] := intToStr( StrToInt(AmbCount)+1);
+end;
+
 procedure TBaseComponentPalette.AddHandler(HandlerType: TComponentPaletteHandlerType;
   const AMethod: TMethod; AsLast: boolean);
 begin
@@ -1098,6 +1117,8 @@ begin
   fComps.Insert(InsertIndex,NewComponent);
   DoPageAddedComponent(NewComponent);
 
+  UpdateAmbiguousComponentName(NewComponent.ComponentClass.ClassName);
+
   if NewComponent.FOrigPageName = '' then Exit;
 
   // See if page was added with different char case. Use the first version always.
@@ -1120,9 +1141,13 @@ begin
 end;
 
 procedure TBaseComponentPalette.RemoveRegComponent(AComponent: TRegisteredComponent);
+var AmbCount: string;
 begin
   fComps.Remove(AComponent);
   AComponent.RealPage:=nil;
+  AmbCount := fAmbiguosComps.Values[AComponent.ComponentClass.ClassName];
+  if (AmbCount <> EmptyStr) and (AmbCount <> '0') then
+     fAmbiguosComps.Values[AComponent.ComponentClass.ClassName] := intToStr( StrToInt(AmbCount)-1);
   //ToDo: fix DoPageRemovedComponent(AComponent);
 end;
 
@@ -1156,6 +1181,25 @@ begin
       Exit(fLastFoundRegComp);
     end;
   Result:=nil;
+end;
+
+function TBaseComponentPalette.FindRegComponent(const ACompClassName: string;
+  AUsedUnits: TStringList): TRegisteredComponent;
+// Return registered component based on used units.
+var
+  i: Integer;
+begin
+  // Linear search. Can be optimized if needed.
+  for i := 0 to fComps.Count-1 do
+    if fComps[i].ComponentClass.ClassName = ACompClassName then
+       if AUsedUnits.IndexOfName( UpperCase(fComps[i].ComponentClass.UnitName) ) >= 0 then
+    begin
+      fLastFoundCompClassName := ACompClassName;
+      fLastFoundRegComp := fComps[i];
+      Exit(fLastFoundRegComp);
+    end;
+  Result:=nil;
+
 end;
 
 function TBaseComponentPalette.CreateNewClassName(const Prefix: string): string;
@@ -1297,6 +1341,12 @@ procedure TBaseComponentPalette.RemoveHandlerUpdated(
   OnUpdateEvent: TPaletteHandlerEvent);
 begin
   RemoveHandler(cphtUpdated,TMethod(OnUpdateEvent));
+end;
+
+function TBaseComponentPalette.IsAmbiguousComponentName(AComponentClass: string
+  ): Boolean;
+begin
+ result := StrToInt( '0' + fAmbiguosComps.Values[AComponentClass]) > 1;
 end;
 
 end.
