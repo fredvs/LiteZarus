@@ -83,12 +83,17 @@ procedure Register;
 
 implementation
 
+uses ComponentEditors;
+
 procedure Register;
 begin
   FormEditingHook.RegisterDesignerMediator(TMyWidgetMediator);
   RegisterComponents('MyWidgets',[TMyButton,TMyGroupBox]);
+  RegisterComponents('Standard',[TButton,TGroupBox]);
   RegisterProjectFileDescriptor(TFileDescPascalUnitWithMyForm.Create,
                                 FileDescGroupName);
+
+  RegisterComponentFactory('MyNotLCLWidget', [TMyWidget]);
 end;
 
 { TMyWidgetMediator }

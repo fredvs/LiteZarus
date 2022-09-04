@@ -12,10 +12,10 @@ type
   { TMyForm1 }
 
   TMyForm1 = class(TMyForm)
-    MyButton1: TMyButton;
-    MyButton2: TMyButton;
-    MyGroupBox1: TMyGroupBox;
-    MyGroupBox2: TMyGroupBox;
+    Button1: TButton;
+    Button2: TButton;
+    GroupBox1: TGroupBox;
+    GroupBox2: TGroupBox;
   private
     { private declarations }
   public

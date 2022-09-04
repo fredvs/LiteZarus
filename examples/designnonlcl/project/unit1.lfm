@@ -5,36 +5,36 @@ object MyForm1: TMyForm1
   Height = 240
   Visible = False
   Caption = 'MyForm1'
-  object MyButton1: TMyButton
+  object Button1: TButton
     Left = 20
     Top = 10
     Width = 75
     Height = 25
     Visible = False
-    Caption = 'MyButton1'
+    Caption = 'Button1'
   end
-  object MyButton2: TMyButton
+  object Button2: TButton
     Left = 27
     Top = 68
     Width = 91
     Height = 25
     Visible = False
-    Caption = 'MyButton2'
+    Caption = 'Button2'
   end
-  object MyGroupBox1: TMyGroupBox
+  object GroupBox1: TGroupBox
     Left = 139
     Top = 65
     Width = 145
     Height = 75
     Visible = False
-    Caption = 'MyGroupBox1'
-    object MyGroupBox2: TMyGroupBox
+    Caption = 'GroupBox1'
+    object GroupBox2: TGroupBox
       Left = 14
       Top = 10
       Width = 101
       Height = 53
       Visible = False
-      Caption = 'MyGroupBox2'
+      Caption = 'GroupBox2'
     end
   end
 end

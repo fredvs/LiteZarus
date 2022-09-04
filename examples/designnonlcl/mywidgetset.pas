@@ -130,6 +130,11 @@ type
   TMyGroupBox = class(TMyWidget)
   end;
 
+  {FACTORY}
+
+  TButton = class(TMyButton) end;
+  TGroupBox = class(TMyGroupBox) end;
+
 implementation
 
 { TMyWidget }
