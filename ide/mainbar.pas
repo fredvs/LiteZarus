@@ -728,11 +728,17 @@ begin
     (LastActiveForm<>nil) and (LastActiveForm.Designer<>nil)
     and (LastActiveForm.Designer.LookupRoot<>nil)
     and not (LastActiveForm.Designer.LookupRoot is TControl);
+  IDEComponentPalette.ActiveRootComponentFactory := EmptyStr;
+  if (LastActiveForm<>nil) and (LastActiveForm.Designer<>nil)
+    and (LastActiveForm.Designer.LookupRoot<>nil) then
+      IDEComponentPalette.ActiveRootComponentFactory :=
+      ComponentFactory(TComponentClass(LastActiveForm.Designer.LookupRoot.ClassType));
   {$IFDEF VerboseComponentPalette}
   DebugLn(['* TMainIDEBar.UpdateIDEComponentPalette: Updating palette *',
            ', HideControls=', IDEComponentPalette.HideControls]);
   {$ENDIF}
-  IDEComponentPalette.Update(False);
+  // set Update(FALSE) will prevent ComponentTabs's visiblity to reflect to new Form's Factory Mode.
+  IDEComponentPalette.Update(IfFormChanged);
   SetupHints;
 end;
 

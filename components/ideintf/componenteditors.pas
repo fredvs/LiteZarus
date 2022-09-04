@@ -16,6 +16,8 @@ unit ComponentEditors;
 
 {$mode objfpc}{$H+}
 
+{$DEFINE COMPONENT_FACTORY}
+
 interface
 
 uses
@@ -500,14 +502,45 @@ type
     function DrawNonVisualComponents(ALookupRoot: TComponent): Boolean; virtual; abstract;
   end;
 
+type
+  PComponentFactoryRec = ^TComponentFactoryRec;
+  TComponentFactoryRec = record
+    Factory: string;
+    ComponentClass: TComponentClass;
+  end;
+
 var
   IDEComponentsMaster: TIDEComponentsMaster = nil;
+  ComponentFactoryList: TList = nil;
+  
+procedure RegisterComponentFactory(const Factory: string;
+  RootComponentClasses: array of TComponentClass);
 
 procedure RegisterEditorForm(const AEditorForm: TObject; const AReference: TPersistent);
 procedure UnregisterEditorForm(const AEditorForm: TObject);
 function FindEditorForm(const AReference: TPersistent): TObject;
 
 implementation
+
+
+procedure RegisterComponentFactory(const Factory: string;
+  RootComponentClasses: array of TComponentClass);   
+var
+  P: PComponentFactoryRec;
+  I : integer;
+begin
+  if ComponentFactoryList = nil then
+    ComponentFactoryList := TList.Create;
+  
+  for i := Low(RootComponentClasses) to High(RootComponentClasses) do
+  begin
+    New(P);
+    P^.Factory := Factory;
+    P^.ComponentClass := RootComponentClasses[i];
+    ComponentFactoryList.Insert(0, P);
+  end;
+    //pg.Classes.Add(ComponentClasses[i]);   
+end;
 
 var
   EditorForms: TMap = nil;
@@ -1494,6 +1527,7 @@ procedure InternalFinal;
 var
   p: PComponentClassRec;
   pq: PComponentClassReqRec;
+  pf: PComponentFactoryRec;
   i: integer;
 begin
   if ComponentClassList<>nil then begin
@@ -1509,6 +1543,13 @@ begin
       Dispose(pq);
     end;
     ComponentClassReqList.Free;
+  end;
+  if Assigned(ComponentFactoryList) then begin
+    for i:=0 to ComponentFactoryList.Count-1 do begin
+      pf:=PComponentFactoryRec(ComponentFactoryList[i]);
+      Dispose(pf);
+    end;
+    ComponentFactoryList.Free;
   end;
 
   EditorForms.Free;

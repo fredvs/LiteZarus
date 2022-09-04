@@ -11,7 +11,8 @@
         <UnitOutputDirectory Value="units/$(TargetCPU)-$(TargetOS)/$(LCLWidgetType)"/>
       </SearchPaths>
       <Other>
-        <CustomOptions Value="$(IDEBuildOptions)"/>
+        <CustomOptions Value="$(IDEBuildOptions)
+-dCOMPONENT_FACTORY"/>
       </Other>
     </CompilerOptions>
     <Description Value="IDEIntf - the interface units for the Lazarus IDE"/>
@@ -319,6 +320,11 @@
         <Filename Value="seledits.pas"/>
         <UnitName Value="SelEdits"/>
       </Item>
+      <Item>
+        <Filename Value="lcl_factory.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="lcl_factory"/>
+      </Item>
     </Files>
     <LazDoc Paths="docs"/>
     <i18n>
@@ -334,6 +340,7 @@
       </Item>
     </RequiredPkgs>
     <UsageOptions>
+      <CustomOptions Value="-dCOMPONENT_FACTORY"/>
       <UnitPath Value="$(PkgOutDir)"/>
     </UsageOptions>
     <PublishOptions>

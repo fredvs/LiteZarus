@@ -20,13 +20,14 @@ uses
   ObjectInspector, ObjInspStrConsts, OIFavoriteProperties, ProjectGroupIntf, 
   PropEdits, PropEditUtils, SrcEditorIntf, StatusBarPropEdit, 
   StringsPropEditDlg, TextTools, ToolBarIntf, TreeViewPropEdit, UnitResources, 
-  bufdatasetdsgn, selectdatasetdlg, SelEdits, LazarusPackageIntf;
+  bufdatasetdsgn, selectdatasetdlg, SelEdits, lcl_factory, LazarusPackageIntf;
 
 implementation
 
 procedure Register;
 begin
   RegisterUnit('IDEWindowIntf', @IDEWindowIntf.Register);
+  RegisterUnit('lcl_factory', @lcl_factory.Register);
 end;
 
 initialization

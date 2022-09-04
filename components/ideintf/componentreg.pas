@@ -214,6 +214,7 @@ type
 
   TBaseComponentPalette = class
   private
+    FFactory: string;
     // List of pages, created based on user ordered and original pages.
     fPages: TBaseComponentPageList;
     // List of all components in all pages.
@@ -306,6 +307,7 @@ type
                                                         write FComponentPageClass;
     property ChangeStamp: integer read fChangeStamp;
     property HideControls: boolean read FHideControls write SetHideControls;
+    property ActiveRootComponentFactory: string read FFactory write FFactory;
     property Selected: TRegisteredComponent read GetSelected write SetSelected;
     property MultiSelect: boolean read GetMultiSelect write SetMultiSelect;
     property SelectionMode: TComponentSelectionMode read FSelectionMode write FSelectionMode;
@@ -322,6 +324,9 @@ const
 var
   IDEComponentPalette: TBaseComponentPalette = nil;
 
+function ComponentFactory(AComponentClass: TComponentClass): string;
+function IsFactoryAcceptComponent(AComponentClass: TComponentClass; RootComponentFactory: string): Boolean;
+function IsFactoryRejectComponent(AComponentClass: TComponentClass; RootComponentFactory: string): Boolean;
 function ComponentPriority(Category: TComponentPriorityCategory; Level: integer): TComponentPriority;
 function ComparePriority(const p1,p2: TComponentPriority): integer;
 function CompareIDEComponentByClass(Data1, Data2: pointer): integer;
@@ -330,8 +335,42 @@ function dbgs(const p: TComponentPriority): string; overload;
 
 implementation
 
+uses ComponentEditors;
+
 const
   BasePath = 'ComponentPaletteOptions/';
+
+function ComponentFactory(AComponentClass: TComponentClass): string;
+var i : integer;
+  p : PComponentFactoryRec;
+begin
+  result := emptyStr;
+  if Assigned(ComponentFactoryList) then begin
+    for i:=0 to ComponentFactoryList.Count-1 do begin
+      p:=PComponentFactoryRec(ComponentFactoryList[i]);
+      if AComponentClass.InheritsFrom(P^.ComponentClass) then
+      begin
+        exit(P^.Factory);
+      end;
+    end;
+  end;
+end;
+
+function IsFactoryAcceptComponent(AComponentClass: TComponentClass; RootComponentFactory: string): Boolean;
+var AComponentFactory: string;
+begin
+  result := True;
+  if RootComponentFactory = EmptyStr then
+     exit;
+  AComponentFactory := ComponentFactory(AComponentClass);
+  result := (AComponentFactory = RootComponentFactory)
+     or (AComponentFactory = EmptyStr);
+end;
+
+function IsFactoryRejectComponent(AComponentClass: TComponentClass; RootComponentFactory: string): Boolean;
+begin
+  result := not IsFactoryAcceptComponent(AComponentClass, RootComponentFactory);
+end;
 
 function ComponentPriority(Category: TComponentPriorityCategory; Level: integer
   ): TComponentPriority;
@@ -1245,7 +1284,8 @@ var
   i, Vote: Integer;
 begin
   Vote:=1;
-  if HideControls and AComponent.ComponentClass.InheritsFrom(TControl) then
+  //if HideControls and AComponent.ComponentClass.InheritsFrom(TControl) then
+  if IsFactoryRejectComponent(AComponent.ComponentClass, ActiveRootComponentFactory) then
     Dec(Vote);
   i:=FHandlers[cphtVoteVisibility].Count;
   while FHandlers[cphtVoteVisibility].NextDownIndex(i) do
